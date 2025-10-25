@@ -1,0 +1,102 @@
+package com.evalenzuela.navigation.ui.viewmodel
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.evalenzuela.navigation.data.model.Item
+import com.evalenzuela.navigation.data.repository.SampleRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import java.text.NumberFormat
+import java.util.Locale
+
+data class CartItem(
+    val item: Item,
+    val quantity: Int = 1
+
+)
+enum class CurrentProfileType {
+    BUYER,
+    SELLER
+}
+class MainViewModel(
+    private val repo: SampleRepository = SampleRepository()
+) : ViewModel() {
+
+    private val _items = MutableStateFlow<List<Item>>(emptyList())
+    val items: StateFlow<List<Item>> = _items.asStateFlow()
+
+    private val _cartItems = MutableStateFlow<List<CartItem>>(emptyList())
+    val cartItems: StateFlow<List<CartItem>> = _cartItems.asStateFlow()
+
+    private val _cartTotal = MutableStateFlow(formatCurrency(0.0))
+    val cartTotal: StateFlow<String> = _cartTotal.asStateFlow()
+    private val _userProfileType = MutableStateFlow(CurrentProfileType.BUYER)
+    val userProfileType: StateFlow<CurrentProfileType> = _userProfileType.asStateFlow()
+
+
+    init {
+        viewModelScope.launch {
+            _items.value = repo.getAll()
+        }
+    }
+
+    fun getItem(id: Int): Item? = repo.getById(id)
+
+    fun addItemToCart(item: Item) {
+        val currentCart = _cartItems.value.toMutableList()
+
+        val existingItem = currentCart.find { it.item.id == item.id }
+
+        if (existingItem != null) {
+
+            val updatedItem = existingItem.copy(quantity = existingItem.quantity + 1)
+            currentCart[currentCart.indexOf(existingItem)] = updatedItem
+        } else {
+
+            currentCart.add(CartItem(item))
+        }
+
+        _cartItems.value = currentCart
+        calculateCartTotal()
+    }
+
+
+    fun checkout() {
+        _cartItems.value = emptyList()
+        _cartTotal.value = formatCurrency(0.0)
+
+    }
+    fun switchProfileType(newType: CurrentProfileType) {
+        _userProfileType.value = newType
+    }
+
+
+    private fun calculateCartTotal() {
+        var total = 0.0
+
+        for (cartItem in _cartItems.value) {
+
+            val priceString = cartItem.item.price
+                .replace(".", "")
+                .replace("$", "")
+                .replace(",", ".")
+                .trim()
+
+            val price = priceString.toDoubleOrNull() ?: 0.0
+            total += price * cartItem.quantity
+        }
+
+
+        _cartTotal.value = formatCurrency(total)
+    }
+
+    private fun formatCurrency(amount: Double): String {
+        val format = NumberFormat.getCurrencyInstance(Locale("es", "CL"))
+        format.minimumFractionDigits = 0
+        format.maximumFractionDigits = 0
+
+        return format.format(amount).replace("CLP", "$").trim()
+    }
+}
