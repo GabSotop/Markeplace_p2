@@ -14,7 +14,6 @@ import java.util.Locale
 data class CartItem(
     val item: Item,
     val quantity: Int = 1
-
 )
 enum class CurrentProfileType {
     BUYER,
@@ -32,8 +31,21 @@ class MainViewModel(
 
     private val _cartTotal = MutableStateFlow(formatCurrency(0.0))
     val cartTotal: StateFlow<String> = _cartTotal.asStateFlow()
+
     private val _userProfileType = MutableStateFlow(CurrentProfileType.BUYER)
     val userProfileType: StateFlow<CurrentProfileType> = _userProfileType.asStateFlow()
+
+    private val _userEmail = MutableStateFlow("")
+    val userEmail: StateFlow<String> = _userEmail.asStateFlow()
+
+    private val _password = MutableStateFlow("")
+    val password: StateFlow<String> = _password.asStateFlow()
+
+    private val _emailError = MutableStateFlow<String?>(null)
+    val emailError: StateFlow<String?> = _emailError.asStateFlow()
+
+    private val _passwordError = MutableStateFlow<String?>(null)
+    val passwordError: StateFlow<String?> = _passwordError.asStateFlow()
 
 
     init {
@@ -62,14 +74,51 @@ class MainViewModel(
         calculateCartTotal()
     }
 
-
     fun checkout() {
         _cartItems.value = emptyList()
         _cartTotal.value = formatCurrency(0.0)
-
     }
+
     fun switchProfileType(newType: CurrentProfileType) {
         _userProfileType.value = newType
+    }
+
+    fun onEmailChange(newEmail: String) {
+        _userEmail.value = newEmail
+        _emailError.value = null
+    }
+
+    fun onPasswordChange(newPassword: String) {
+        _password.value = newPassword
+        _passwordError.value = null
+    }
+
+    fun validateAndSaveProfile(): Boolean {
+        var isValid = true
+        val email = _userEmail.value
+        val password = _password.value
+
+        if (email.isBlank()) {
+            _emailError.value = "El correo no puede estar vacío."
+            isValid = false
+        } else if (!email.contains('@') || !email.contains('.')) {
+            _emailError.value = "Formato de correo inválido (ej: usuario@dominio.cl)."
+            isValid = false
+        } else {
+            _emailError.value = null
+        }
+
+        if (password.length < 6) {
+            _passwordError.value = "Debe tener al menos 6 caracteres."
+            isValid = false
+        } else if (!password.any { it.isDigit() }) {
+            _passwordError.value = "La contraseña debe contener al menos un número."
+            isValid = false
+        } else {
+            _passwordError.value = null
+        }
+
+        return isValid
     }
 
 
