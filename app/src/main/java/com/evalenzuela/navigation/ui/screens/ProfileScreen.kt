@@ -53,7 +53,7 @@ fun ProfileScreen(viewModel: MainViewModel) {
 
             when (profileType) {
                 CurrentProfileType.BUYER -> BuyerProfileContent(viewModel)
-                CurrentProfileType.SELLER -> SellerProfileContent()
+                CurrentProfileType.SELLER -> SellerProfileContent(viewModel)
             }
             Spacer(Modifier.height(32.dp))
 
@@ -154,12 +154,77 @@ fun BuyerProfileContent(viewModel: MainViewModel) {
 }
 
 @Composable
-fun SellerProfileContent() {
-    Text("Bienvenido, Vendedor.", style = MaterialTheme.typography.headlineSmall)
-    Spacer(Modifier.height(8.dp))
-    Text("Administra tus productos y revisa tus estadísticas de venta.")
-    Spacer(Modifier.height(16.dp))
-    Button(onClick = { }) {
-        Text("Ver Mis Productos")
+fun SellerProfileContent(viewModel: MainViewModel) {
+    var productName by remember { mutableStateOf("") }
+    var productPrice by remember { mutableStateOf("") }
+    var productUrl by remember { mutableStateOf("") }
+    val context = LocalContext.current
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+    ) {
+        Text("Bienvenido, Vendedor.", style = MaterialTheme.typography.headlineSmall)
+        Spacer(Modifier.height(8.dp))
+        Text("Ingrese un nuevo producto para tu catálogo:")
+        Spacer(Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = productName,
+            onValueChange = { productName = it },
+            label = { Text("Nombre del Producto") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(Modifier.height(12.dp))
+
+        OutlinedTextField(
+            value = productPrice,
+            onValueChange = { productPrice = it },
+            label = { Text("Precio (Ej: $99.990)") },
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+        )
+        Spacer(Modifier.height(12.dp))
+
+        OutlinedTextField(
+            value = productUrl,
+            onValueChange = { productUrl = it },
+            label = { Text("URL de Imagen (Opcional)") },
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri)
+        )
+        Spacer(Modifier.height(24.dp))
+
+        Button(
+            onClick = {
+                if (productName.isBlank() || productPrice.isBlank()) {
+                    Toast.makeText(context, "El nombre y precio son obligatorios.", Toast.LENGTH_SHORT).show()
+                } else {
+
+                    viewModel.addNewItem(
+                        title = productName,
+                        price = productPrice,
+                        imageUrl = productUrl
+                    )
+
+                    Toast.makeText(context, "Producto '$productName' agregado al catálogo.", Toast.LENGTH_LONG).show()
+                    productName = ""
+                    productPrice = ""
+                    productUrl = ""
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(12.dp)
+        ) {
+            Text("Agregar Producto al Catálogo")
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        Button(onClick = {
+            Toast.makeText(context, "Navegando a Gestión de Productos (Simulación).", Toast.LENGTH_SHORT).show()
+        }) {
+            Text("Ver Mis Productos")
+        }
     }
 }

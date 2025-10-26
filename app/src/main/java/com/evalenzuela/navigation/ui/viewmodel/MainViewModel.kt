@@ -47,12 +47,17 @@ class MainViewModel(
     private val _passwordError = MutableStateFlow<String?>(null)
     val passwordError: StateFlow<String?> = _passwordError.asStateFlow()
 
-
-    init {
+    private fun loadItems() {
         viewModelScope.launch {
             _items.value = repo.getAll()
         }
     }
+
+
+    init {
+        loadItems()
+    }
+
 
     fun getItem(id: Int): Item? = repo.getById(id)
 
@@ -119,6 +124,21 @@ class MainViewModel(
         }
 
         return isValid
+    }
+
+    fun addNewItem(title: String, price: String, imageUrl: String) {
+        val newItem = Item(
+            id = -1,
+            title = title,
+            description = "Producto nuevo agregado por el vendedor.",
+            price = price,
+            imageUrl = imageUrl
+        )
+
+        repo.addItem(newItem)
+
+
+        loadItems()
     }
 
 
