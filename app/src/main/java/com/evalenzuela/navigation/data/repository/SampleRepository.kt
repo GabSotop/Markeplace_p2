@@ -46,7 +46,7 @@ class SampleRepository {
             "Disco SSD 1TB",
             "Velocidad ultrarrápida.",
             "$79.990",
-            ""
+            "https://www.discoazul.com/uploads/media/images/disco-duro-ssd-960gb-sata3-kingston-ssdnow-a400-2-5-11.jpg"
 
 
         )
